@@ -20,9 +20,10 @@ export interface Job {
   quoteNumber: string;
   date: string;
   sections: JobSection[];
-  totalLabour: number;
-  totalExtras: number;
+  totalLabour?: number;
+  totalExtras?: number;
   grandTotal: number;
+  status: 'draft' | 'submitted' | 'invoiced';
 }
 
 export const DEFAULT_PRICING: Record<string, number> = {
