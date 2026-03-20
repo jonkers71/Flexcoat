@@ -4,10 +4,10 @@ export const JobItemSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Item name is required"),
   unit: z.string(),
-  quantity: z.number().min(0),
-  rate: z.number().min(0),
-  total: z.number().min(0),
-});
+  quantity: z.number().min(0, "Quantity must be at least 0").refine(val => !isNaN(val), "Quantity must be a valid number"),
+  rate: z.number().min(0, "Rate must be at least 0").refine(val => !isNaN(val), "Rate must be a valid number"),
+  total: z.number().min(0, "Total must be at least 0").refine(val => !isNaN(val), "Total must be a valid number"),
+})
 
 export const JobSectionSchema = z.object({
   id: z.string(),

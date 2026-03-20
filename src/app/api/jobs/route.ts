@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { JobSchema } from '@/lib/schema';
+import { ZodError } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,12 +28,28 @@ export async function POST(request: Request) {
       .select();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: `Database error: ${error.message}` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true, data });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+    console.error('API error:', err);
+    
+    if (err instanceof ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: err.errors },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: err.message || 'An unexpected error occurred' },
+      { status: 400 }
+    );
   }
 }
 
@@ -44,11 +61,19 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: `Database error: ${error.message}` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ data });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+    console.error('API error:', err);
+    return NextResponse.json(
+      { error: err.message || 'An unexpected error occurred' },
+      { status: 400 }
+    );
   }
 }

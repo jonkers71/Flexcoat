@@ -8,7 +8,7 @@ import { INITIAL_SECTIONS, Job } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Save, FileText, Download, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Save, FileText, Download, Loader2, RotateCcw, Calendar } from 'lucide-react';
 import PDFDownload from './PDFDownload';
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,7 +27,7 @@ export default function JobForm() {
     },
   });
 
-  const { control, register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = form;
+  const { control, register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = form;
 
   const { fields: sectionFields } = useFieldArray({
     control,
@@ -57,8 +57,10 @@ export default function JobForm() {
         body: JSON.stringify(data),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to save job card');
+        throw new Error(result.error || 'Failed to save job card');
       }
 
       toast({
@@ -66,10 +68,29 @@ export default function JobForm() {
         description: "Job card saved to database",
       });
     } catch (error: any) {
+      console.error('Submission error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleClearForm = () => {
+    if (window.confirm("Are you sure you want to clear the entire form? All unsaved changes will be lost.")) {
+      reset({
+        customerName: '',
+        address: '',
+        quoteNumber: '',
+        date: new Date().toISOString().split('T')[0],
+        sections: INITIAL_SECTIONS as any,
+        grandTotal: 0,
+        status: 'draft',
+      });
+      toast({
+        title: "Form Cleared",
+        description: "The job card has been reset to default values.",
       });
     }
   };
@@ -88,6 +109,15 @@ export default function JobForm() {
             </h1>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={handleClearForm}
+              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50 w-full sm:w-auto"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Clear Form
+            </Button>
             <Button 
               type="submit" 
               disabled={isSubmitting}
@@ -124,13 +154,25 @@ export default function JobForm() {
               />
               {errors.quoteNumber && <p className="text-xs text-destructive">{errors.quoteNumber.message}</p>}
             </div>
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Site Address</label>
               <Input 
                 {...register("address")}
                 placeholder="123 Example St, Suburb" 
               />
               {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Date</label>
+              <div className="relative">
+                <Input 
+                  type="date"
+                  {...register("date")}
+                  className="pl-10"
+                />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+              {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
             </div>
           </CardContent>
         </Card>
@@ -227,13 +269,15 @@ function ItemRow({ sectionIndex, itemIndex, onRemove }: { sectionIndex: number, 
       <td className="px-4 py-4">
         <Input 
           type="number" 
-          className="text-center h-8"
+          step="any"
+          className="text-center h-8" 
           {...register(`sections.${sectionIndex}.items.${itemIndex}.quantity`, { valueAsNumber: true })}
         />
       </td>
       <td className="px-4 py-4">
         <Input 
           type="number" 
+          step="any"
           className="text-center h-8" 
           {...register(`sections.${sectionIndex}.items.${itemIndex}.rate`, { valueAsNumber: true })}
         />
