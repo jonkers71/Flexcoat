@@ -1,5 +1,4 @@
-import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { Job } from '@/lib/types';
 
 // Register a clean font if possible, otherwise use defaults
@@ -15,17 +14,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 30,
     borderBottom: 2,
-    borderBottomColor: '#0ea5e9',
-    paddingBottom: 10,
+    borderBottomColor: '#0096D6', // Flexcoat Cyan
+    paddingBottom: 15,
+    alignItems: 'center',
+  },
+  logo: {
+    width: 140,
+    height: 'auto',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#0ea5e9',
+    color: '#1B3D6D', // Flexcoat Navy
+    textTransform: 'uppercase',
   },
   subTitle: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#64748b',
+    marginTop: 2,
   },
   infoSection: {
     marginBottom: 20,
@@ -122,7 +128,7 @@ export const JobPDF = ({ job }: { job: Job }) => (
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>FLEXCOAT</Text>
+          <Image src="e:/GitRepos/flexcoat_app/public/logo.png" style={styles.logo} />
           <Text style={styles.subTitle}>Job Completion Card</Text>
         </View>
         <View style={{ textAlign: 'right' }}>
