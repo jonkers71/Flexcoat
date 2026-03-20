@@ -128,7 +128,7 @@ export const JobPDF = ({ job }: { job: Job }) => (
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Image src="e:/GitRepos/flexcoat_app/public/logo.png" style={styles.logo} />
+          <Image src="/logo.png" style={styles.logo} />
           <Text style={styles.subTitle}>Job Completion Card</Text>
         </View>
         <View style={{ textAlign: 'right' }}>
