@@ -30,38 +30,31 @@ export default function JobsHistory() {
 
   useEffect(() => {
     fetchJobs();
-    const savedAdmin = sessionStorage.getItem('flexcoat-admin');
-    if (savedAdmin === 'true') {
-      setIsAdmin(true);
-    }
+    // Check admin role from the server on mount
+    fetch('/api/auth/role')
+      .then((r) => r.json())
+      .then((d) => { if (d.role === 'admin') setIsAdmin(true); })
+      .catch(() => {});
   }, []);
 
   const handleAdminToggle = async () => {
-    if (isAdmin) {
-      setIsAdmin(false);
-      sessionStorage.removeItem('flexcoat-admin');
-      toast({ title: 'Admin Mode Disabled' });
-      return;
-    }
-    const pin = window.prompt("Enter Admin PIN:");
-    if (!pin) return;
-
     try {
-      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-      if (hashHex === "7e2fd71095f5f159b8f16d10c991a8b71b060d97f10cf442c977d3c9bcfbc3bd") {
+      const res = await fetch('/api/auth/role');
+      const d = await res.json();
+      if (d.role === 'admin') {
         setIsAdmin(true);
-        sessionStorage.setItem('flexcoat-admin', 'true');
-        toast({ title: 'Admin Mode Enabled' });
+        toast({ title: 'Admin Mode Active', description: 'Your account has admin privileges.' });
       } else {
-        toast({ title: 'Incorrect PIN', variant: 'destructive' });
+        toast({ title: 'Access Denied', description: 'Your account does not have admin privileges.', variant: 'destructive' });
       }
-    } catch (err) {
-      console.error(err);
-      toast({ title: 'Error verifying PIN', variant: 'destructive' });
+    } catch {
+      toast({ title: 'Error', description: 'Could not verify role.', variant: 'destructive' });
     }
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
   };
 
   const deleteJob = async (id: string) => {
@@ -101,11 +94,16 @@ export default function JobsHistory() {
             {isAdmin ? <Unlock className="w-4 h-4 text-green-600" /> : <Lock className="w-4 h-4" />}
           </Button>
         </div>
-        <Link href="/">
-          <Button className="bg-[#1B3D6D] text-white hover:bg-[#142d50]">
-            New Job Card
+        <div className="flex gap-2">
+          <Link href="/">
+            <Button className="bg-[#1B3D6D] text-white hover:bg-[#142d50]">
+              New Job Card
+            </Button>
+          </Link>
+          <Button variant="outline" onClick={handleLogout} className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50">
+            Sign Out
           </Button>
-        </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

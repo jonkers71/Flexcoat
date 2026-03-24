@@ -16,6 +16,9 @@ export default function PhotoUpload({ onUpload, onRemove, existingPhotos = [] }:
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+  const MAX_SIZE_MB = 10;
+
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -24,13 +27,35 @@ export default function PhotoUpload({ onUpload, onRemove, existingPhotos = [] }:
       }
 
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      // ── Validate file type ───────────────────────────────────────────────
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast({
+          title: 'Invalid File Type',
+          description: 'Only JPEG, PNG, WebP, and HEIC images are allowed.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // ── Validate file size ───────────────────────────────────────────────
+      if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+        toast({
+          title: 'File Too Large',
+          description: `Photos must be under ${MAX_SIZE_MB} MB.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // ── Scope file to a per-session folder to avoid collisions ───────────
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const uniqueName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `uploads/${uniqueName}`;
+
+      const { error: uploadError } = await supabase.storage
         .from('job-photos')
-        .upload(filePath, file);
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
 
       if (uploadError) {
         throw uploadError;
@@ -42,17 +67,19 @@ export default function PhotoUpload({ onUpload, onRemove, existingPhotos = [] }:
 
       onUpload(publicUrl);
       toast({
-        title: "Photo Uploaded",
-        description: "Site image has been attached to the job.",
+        title: 'Photo Uploaded',
+        description: 'Site image has been attached to the job.',
       });
     } catch (error: any) {
       toast({
-        title: "Upload Error",
+        title: 'Upload Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setUploading(false);
+      // Reset the input so the same file can be re-selected if needed
+      event.target.value = '';
     }
   };
 

@@ -38,39 +38,29 @@ export default function JobForm() {
 
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Check admin role from the server on mount — no client-side PIN required.
+  // The role is stored in the user's Supabase user_metadata by an admin.
   useEffect(() => {
-    const savedAdmin = sessionStorage.getItem('flexcoat-admin');
-    if (savedAdmin === 'true') {
-      setIsAdmin(true);
-    }
+    fetch('/api/auth/role')
+      .then((r) => r.json())
+      .then((d) => { if (d.role === 'admin') setIsAdmin(true); })
+      .catch(() => {});
   }, []);
 
+  // handleAdminToggle is kept for the UI lock/unlock icon but no longer
+  // accepts a PIN — it simply re-fetches the role from the server.
   const handleAdminToggle = async () => {
-    if (isAdmin) {
-      setIsAdmin(false);
-      sessionStorage.removeItem('flexcoat-admin');
-      toast({ title: 'Admin Mode Disabled' });
-      return;
-    }
-    const pin = window.prompt("Enter Admin PIN:");
-    if (!pin) return;
-
     try {
-      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-      // SHA-256 hash for the PIN
-      if (hashHex === "7e2fd71095f5f159b8f16d10c991a8b71b060d97f10cf442c977d3c9bcfbc3bd") {
+      const res = await fetch('/api/auth/role');
+      const d = await res.json();
+      if (d.role === 'admin') {
         setIsAdmin(true);
-        sessionStorage.setItem('flexcoat-admin', 'true');
-        toast({ title: 'Admin Mode Enabled' });
+        toast({ title: 'Admin Mode Active', description: 'Your account has admin privileges.' });
       } else {
-        toast({ title: 'Incorrect PIN', variant: 'destructive' });
+        toast({ title: 'Access Denied', description: 'Your account does not have admin privileges.', variant: 'destructive' });
       }
-    } catch (err) {
-      console.error(err);
-      toast({ title: 'Error verifying PIN', variant: 'destructive' });
+    } catch {
+      toast({ title: 'Error', description: 'Could not verify role.', variant: 'destructive' });
     }
   };
 
@@ -290,6 +280,17 @@ export default function JobForm() {
             </Link>
             <Button type="button" variant="ghost" className="w-full sm:w-auto text-slate-400 hover:text-slate-600" onClick={handleAdminToggle} title="Toggle Admin Mode">
               {isAdmin ? <Unlock className="w-4 h-4 text-green-600" /> : <Lock className="w-4 h-4" />}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={async () => {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+              }}
+              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50 w-full sm:w-auto"
+            >
+              Sign Out
             </Button>
             <Button 
               type="submit" 
