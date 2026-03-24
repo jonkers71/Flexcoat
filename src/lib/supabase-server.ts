@@ -2,7 +2,7 @@
  * Server-side Supabase client factory.
  *
  * Use this ONLY in:
- *  - API Route Handlers (app/api/**/route.ts)
+ *  - API Route Handlers (app/api/ route.ts files)
  *  - Server Components (no 'use client' directive)
  *
  * This file imports 'next/headers' which is NOT available in Client Components.
@@ -23,7 +23,7 @@ export async function createSupabaseServerClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           );

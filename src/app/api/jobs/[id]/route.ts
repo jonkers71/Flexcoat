@@ -15,8 +15,9 @@ async function requireAdmin() {
 // ── DELETE /api/jobs/[id] — Delete a job and its associated files ────────────
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const { user, supabase, isAdmin } = await requireAdmin();
 
   if (!user) {
@@ -28,8 +29,6 @@ export async function DELETE(
   }
 
   try {
-    const { id } = params;
-
     // 1. Fetch the job first to get the pdf_url for cleanup
     const { data: job, error: fetchError } = await supabase
       .from('jobs')
@@ -103,8 +102,9 @@ export async function DELETE(
 // ── PATCH /api/jobs/[id] — Update job status (admin only) ───────────────────
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const { user, supabase, isAdmin } = await requireAdmin();
 
   if (!user) {
@@ -116,7 +116,6 @@ export async function PATCH(
   }
 
   try {
-    const { id } = params;
     const body = await request.json();
 
     const { data, error } = await supabase

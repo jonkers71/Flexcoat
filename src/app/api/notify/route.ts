@@ -2,9 +2,10 @@ import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
+  // Initialise Resend lazily so missing env var doesn't break build
+  const resend = new Resend(process.env.RESEND_API_KEY || '');
+
   // Require authentication before sending notifications
   const supabase = await createSupabaseServerClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
