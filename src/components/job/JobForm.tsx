@@ -245,22 +245,25 @@ export default function JobForm() {
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit as any)} className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 pb-32">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b pb-8 text-center md:text-left">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="bg-white p-3 rounded-xl border-2 border-slate-100 shadow-sm">
-              <img src="/logo.png" alt="FlexCoat Logo" className="h-16 md:h-20 w-auto object-contain" />
+        {/* ── Header ──────────────────────────────────────────────────── */}
+        <div className="border-b pb-6">
+          {/* Logo + Title row */}
+          <div className="flex items-center gap-4 mb-4">
+            <div className="bg-white p-2 rounded-xl border-2 border-slate-100 shadow-sm flex-shrink-0">
+              <img src="/logo.png" alt="FlexCoat Logo" className="h-14 w-auto object-contain" />
             </div>
-            <div className="h-16 w-px bg-slate-200 hidden md:block" />
-            <h1 className="text-3xl md:text-4xl font-black text-[#1B3D6D] tracking-tighter">
+            <div className="h-12 w-px bg-slate-200 hidden sm:block flex-shrink-0" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1B3D6D] tracking-tighter">
               Job Card Entry
             </h1>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          {/* Button toolbar — wraps on smaller screens */}
+          <div className="flex flex-wrap gap-2">
             <Button 
               type="button"
               variant="outline"
               onClick={handleClearForm}
-              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50 w-full sm:w-auto"
+              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50"
             >
               <RotateCcw className="w-4 h-4" />
               Clear Form
@@ -269,16 +272,16 @@ export default function JobForm() {
               type="button"
               variant="outline"
               onClick={restoreDraft}
-              className="gap-2 border-slate-300 hover:bg-slate-50 w-full sm:w-auto"
+              className="gap-2 border-slate-300 hover:bg-slate-50"
             >
               <RotateCcw className="w-4 h-4" /> Restore Draft
             </Button>
-            <Link href="/jobs" className="w-full sm:w-auto">
-              <Button type="button" variant="outline" className="gap-2 border-slate-300 hover:bg-slate-50 w-full">
+            <Link href="/jobs">
+              <Button type="button" variant="outline" className="gap-2 border-slate-300 hover:bg-slate-50">
                 <History className="w-4 h-4" /> History
               </Button>
             </Link>
-            <Button type="button" variant="ghost" className="w-full sm:w-auto text-slate-400 hover:text-slate-600" onClick={handleAdminToggle} title="Toggle Admin Mode">
+            <Button type="button" variant="ghost" className="text-slate-400 hover:text-slate-600 px-3" onClick={handleAdminToggle} title="Toggle Admin Mode">
               {isAdmin ? <Unlock className="w-4 h-4 text-green-600" /> : <Lock className="w-4 h-4" />}
             </Button>
             <Button
@@ -288,22 +291,20 @@ export default function JobForm() {
                 await fetch('/api/auth/logout', { method: 'POST' });
                 window.location.href = '/login';
               }}
-              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50 w-full sm:w-auto"
+              className="gap-2 border-slate-200 text-slate-600 hover:bg-slate-50"
             >
               Sign Out
             </Button>
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="gap-2 bg-[#1B3D6D] hover:bg-[#142d50] text-white w-full sm:w-auto"
+              className="gap-2 bg-[#1B3D6D] hover:bg-[#142d50] text-white"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {isAdmin ? "Save to Database" : "Submit & Email"}
             </Button>
             {isAdmin && (
-              <div className="w-full sm:w-auto">
-                <PDFDownload job={watch() as any as Job} />
-              </div>
+              <PDFDownload job={watch() as any as Job} />
             )}
           </div>
         </div>

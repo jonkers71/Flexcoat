@@ -46,7 +46,10 @@ export async function proxy(request: NextRequest) {
   const publicPaths = ['/login', '/_next', '/favicon.ico', '/logo.png', '/manifest.json', '/sw.js', '/workbox-'];
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
-  if (!user && !isPublic) {
+  // API routes handle their own auth and return JSON 401 — never redirect them to HTML
+  const isApiRoute = pathname.startsWith('/api/');
+
+  if (!user && !isPublic && !isApiRoute) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);
