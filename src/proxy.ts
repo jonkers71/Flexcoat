@@ -9,60 +9,76 @@ import { NextResponse, type NextRequest } from 'next/server';
  *  - All other routes require an authenticated Supabase session.
  *  - Unauthenticated requests are redirected to /login.
  *  - Auth cookies are refreshed on every response so sessions stay alive.
+ *  - If Supabase env vars are missing, allow requests to proceed (dev mode).
  */
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
+  // Check if Supabase is configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // If Supabase is not configured, allow all requests to proceed (development mode)
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return supabaseResponse;
+  }
+
+  try {
+    const supabase = createServerClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value)
+            );
+            supabaseResponse = NextResponse.next({ request });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            );
+          },
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
+      }
+    );
+
+    // Refresh the session — IMPORTANT: do not add logic between createServerClient
+    // and getUser() as it may cause issues with session refresh.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { pathname } = request.nextUrl;
+
+    // Allow public paths
+    const publicPaths = ['/login', '/_next', '/favicon.ico', '/logo.png', '/manifest.json', '/sw.js', '/workbox-'];
+    const isPublic = publicPaths.some((p) => pathname.startsWith(p));
+
+    // API routes handle their own auth and return JSON 401 — never redirect them to HTML
+    const isApiRoute = pathname.startsWith('/api/');
+
+    if (!user && !isPublic && !isApiRoute) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/login';
+      return NextResponse.redirect(loginUrl);
     }
-  );
 
-  // Refresh the session — IMPORTANT: do not add logic between createServerClient
-  // and getUser() as it may cause issues with session refresh.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    // If already logged in and visiting /login, redirect to home
+    if (user && pathname === '/login') {
+      const homeUrl = request.nextUrl.clone();
+      homeUrl.pathname = '/';
+      return NextResponse.redirect(homeUrl);
+    }
 
-  const { pathname } = request.nextUrl;
-
-  // Allow public paths
-  const publicPaths = ['/login', '/_next', '/favicon.ico', '/logo.png', '/manifest.json', '/sw.js', '/workbox-'];
-  const isPublic = publicPaths.some((p) => pathname.startsWith(p));
-
-  // API routes handle their own auth and return JSON 401 — never redirect them to HTML
-  const isApiRoute = pathname.startsWith('/api/');
-
-  if (!user && !isPublic && !isApiRoute) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/login';
-    return NextResponse.redirect(loginUrl);
+    return supabaseResponse;
+  } catch (error) {
+    console.error('Middleware error:', error);
+    // On error, allow the request to proceed but log the issue
+    return supabaseResponse;
   }
-
-  // If already logged in and visiting /login, redirect to home
-  if (user && pathname === '/login') {
-    const homeUrl = request.nextUrl.clone();
-    homeUrl.pathname = '/';
-    return NextResponse.redirect(homeUrl);
-  }
-
-  return supabaseResponse;
 }
 
 export const config = {
