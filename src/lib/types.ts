@@ -24,6 +24,10 @@ export interface Job {
   totalExtras?: number;
   grandTotal: number;
   status: 'draft' | 'submitted' | 'invoiced';
+  location?: { lat: number; lng: number };
+  photos?: string[];
+  operatorSignature?: string;
+  clientSignature?: string;
 }
 
 export const DEFAULT_PRICING: Record<string, number> = {

@@ -119,6 +119,39 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
     paddingTop: 10,
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 10,
+  },
+  photo: {
+    width: '30%',
+    height: 100,
+    objectFit: 'cover',
+    borderRadius: 4,
+  },
+  signatureSection: {
+    marginTop: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  signatureBox: {
+    width: '45%',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    paddingTop: 5,
+  },
+  signatureImage: {
+    height: 60,
+    width: 'auto',
+    marginBottom: 5,
+  },
+  locationText: {
+    fontSize: 7,
+    color: '#94a3b8',
+    marginTop: 5,
   }
 });
 
@@ -185,6 +218,41 @@ export const JobPDF = ({ job }: { job: Job }) => (
           <Text style={styles.totalValue}>${job.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
         </View>
       </View>
+
+      {/* Photos Section */}
+      {job.photos && job.photos.length > 0 && (
+        <View style={styles.section} wrap={false}>
+          <Text style={styles.sectionTitle}>Site Photos</Text>
+          <View style={styles.photoGrid}>
+            {job.photos.map((url, i) => (
+              <Image key={i} src={url} style={styles.photo} />
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Sign-off Section */}
+      <View style={styles.signatureSection} wrap={false}>
+        <View style={styles.signatureBox}>
+          {job.operatorSignature && (
+            <Image src={job.operatorSignature} style={styles.signatureImage} />
+          )}
+          <Text style={styles.label}>Operator Signature</Text>
+        </View>
+        <View style={styles.signatureBox}>
+          {job.clientSignature && (
+            <Image src={job.clientSignature} style={styles.signatureImage} />
+          )}
+          <Text style={styles.label}>Client Signature</Text>
+        </View>
+      </View>
+
+      {/* Geolocation */}
+      {job.location && (
+        <Text style={styles.locationText}>
+          GPS Location: {job.location.lat.toFixed(6)}, {job.location.lng.toFixed(6)}
+        </Text>
+      )}
 
       <Text style={styles.footer}>
         FlexCoat Waterproofing Solutions - Quality Guaranteed

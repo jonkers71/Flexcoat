@@ -24,6 +24,13 @@ export const JobSchema = z.object({
   sections: z.array(JobSectionSchema),
   grandTotal: z.number(),
   status: z.enum(['draft', 'submitted', 'invoiced']),
+  location: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }).optional(),
+  photos: z.array(z.string()),
+  operatorSignature: z.string().optional(),
+  clientSignature: z.string().optional(),
 });
 
 export type JobFormData = z.infer<typeof JobSchema>;
