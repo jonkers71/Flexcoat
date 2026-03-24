@@ -10,7 +10,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  *  - Unauthenticated requests are redirected to /login.
  *  - Auth cookies are refreshed on every response so sessions stay alive.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
